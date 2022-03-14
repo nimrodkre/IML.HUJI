@@ -26,7 +26,10 @@ def test_univariate_gaussian():
     plt.show()
 
     # Question 3 - Plotting Empirical PDF of fitted model
-    raise NotImplementedError()
+    y = univariateGaussian.pdf(X)
+    plt.clf()
+    plt.scatter(X, y)
+    plt.show()
 
 
 def test_multivariate_gaussian():

@@ -88,7 +88,7 @@ class UnivariateGaussian:
         for i, x in enumerate(X):
             results[i] = normal_function(X[i], self.mu_, self.var_)
 
-        raise NotImplementedError()
+        return results
 
     @staticmethod
     def log_likelihood(mu: float, sigma: float, X: np.ndarray) -> float:
