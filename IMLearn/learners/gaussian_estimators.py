@@ -51,7 +51,8 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+        self.mu_ = np.mean(X)
+        self.var_ = np.var(X)
 
         self.fitted_ = True
         return self
@@ -76,6 +77,17 @@ class UnivariateGaussian:
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `pdf` function")
+
+        def normal_function(x, mu, var):
+            std = np.sqrt(var)
+            exp_result = np.exp(-0.5 * np.power((x - mu) / std), 2)
+            coefficent = 1 / (std * np.sqrt(2 * np.pi))
+            return coefficent * exp_result
+
+        results = np.zeros(X.shape)
+        for i, x in enumerate(X):
+            results[i] = normal_function(X[i], self.mu_, self.var_)
+
         raise NotImplementedError()
 
     @staticmethod
@@ -143,7 +155,8 @@ class MultivariateGaussian:
         Sets `self.mu_`, `self.cov_` attributes according to calculated estimation.
         Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+        self.mu_ = np.mean(X)
+        self.cov_ = np.cov(X)
 
         self.fitted_ = True
         return self
