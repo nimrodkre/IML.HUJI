@@ -18,29 +18,58 @@ def test_univariate_gaussian():
     sample_diff = []
     for num in divisible_by_10:
         sample = X[:num]
-        diff = np.abs(np.mean(sample) - univariateGaussian.mu_)
+        # sample = np.random.choice(X, num, replace=False)
+        diff = np.abs(np.mean(sample) - 10)
         sample_diff.append(diff)
-    # fig = go.Figure(data=go.Scatter(x=divisible_by_10, y=sample_diff, mode='markers'))
-    # fig.show()
+
     plt.scatter(divisible_by_10, sample_diff)
+    plt.title("Diff Between Expected Value of All Samples and N Samples")
+    plt.xlabel("Number of Samples (N)")
+    plt.ylabel("Distance From the Original Expected Value")
     plt.show()
 
     # Question 3 - Plotting Empirical PDF of fitted model
     y = univariateGaussian.pdf(X)
     plt.clf()
-    plt.scatter(X, y)
+    plt.scatter(X, y, s=2)
+    plt.title("PDF Over Original Data")
+    plt.xlabel("Sample")
+    plt.ylabel("PDF Sample Value")
     plt.show()
 
 
 def test_multivariate_gaussian():
     # Question 4 - Draw samples and print fitted model
-    raise NotImplementedError()
+    mu = np.array([0, 0, 4, 0])
+    sigma = np.array([[1, 0.2, 0, 0.5],
+                      [0.2, 2, 0, 0],
+                      [0, 0, 1, 0],
+                      [0.5, 0, 0, 1]])
+    X = np.random.multivariate_normal(mu, sigma, 1000)
+    multivariateGaussian = MultivariateGaussian()
+    multivariateGaussian.fit(X)
+    a = multivariateGaussian.pdf(X)
+    print(multivariateGaussian.mu_)
+    print(multivariateGaussian.cov_)
 
     # Question 5 - Likelihood evaluation
-    raise NotImplementedError()
-
+    f1 = np.linspace(-10, 10, 200)
+    f3 = np.linspace(-10, 10, 200)
+    heatmap = np.zeros([200, 200])
+    print("CHECK ", multivariateGaussian.pdf(X))
+    from tqdm import tqdm
+    for i in tqdm(range(len(f1))):
+        for j in range(len(f3)):
+            heatmap[i][j] = multivariateGaussian.log_likelihood(np.array([f1[i], 0, f3[j], 0]).reshape(1, 4), sigma, X)
+    with open(r"C:\HUJI_computer_projects\IML\ex1\heatmap_omri.npy", "wb") as f:
+        np.save(f, heatmap)
+    plt.pcolormesh(f3, f1, heatmap)
+    plt.title("Log Likelihood of Expected Value [f1, 0, f3, 0]")
+    plt.xlabel("f3")
+    plt.ylabel("f1")
+    plt.show()
     # Question 6 - Maximum likelihood
-    raise NotImplementedError()
+    print(np.where(heatmap == np.amax(heatmap)))
 
 
 if __name__ == '__main__':
