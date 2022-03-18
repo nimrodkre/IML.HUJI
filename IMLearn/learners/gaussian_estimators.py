@@ -214,17 +214,10 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
-        # d = X.shape[1]
-        # n = X.shape[0]
-        # def calc_var2(x_i):
-        #     return np.transpose(x_i) @ np.linalg.inv(cov) @ x_i
-        # var1 = -(n/2) * (d * np.log(2 * np.pi) + np.log(np.linalg.det(cov)))
-        # var2 = -0.5 * np.sum(np.apply_along_axis(calc_var2, 1, X-mu))
-        # return var1 + var2
-        m = X.shape[0]
+        n = X.shape[0]
         d = X.shape[1]
-        cov_inv = np.linalg.inv(cov)
-        x_tag = (X - mu).transpose()
-        return -0.5 * m * (d * np.log(2 * np.pi) + np.log(np.linalg.det(cov))) - 0.5 * np.sum(
-            np.sum((x_tag * (cov_inv @ x_tag)), axis=0))
-
+        var1 = -0.5 * n * d * np.log(2 * np.pi)
+        var2 = -0.5 * n * np.log(np.linalg.det(cov))
+        temp_mat = (X - mu).transpose()
+        var3 = -0.5 * np.sum(np.sum(temp_mat * (np.linalg.inv(cov) @ temp_mat), axis=0))
+        return var1 + var2 + var3
