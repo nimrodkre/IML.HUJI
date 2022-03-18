@@ -48,7 +48,6 @@ def test_multivariate_gaussian():
     X = np.random.multivariate_normal(mu, sigma, 1000)
     multivariateGaussian = MultivariateGaussian()
     multivariateGaussian.fit(X)
-    a = multivariateGaussian.pdf(X)
     print(multivariateGaussian.mu_)
     print(multivariateGaussian.cov_)
 
@@ -56,20 +55,19 @@ def test_multivariate_gaussian():
     f1 = np.linspace(-10, 10, 200)
     f3 = np.linspace(-10, 10, 200)
     heatmap = np.zeros([200, 200])
-    print("CHECK ", multivariateGaussian.pdf(X))
     from tqdm import tqdm
     for i in tqdm(range(len(f1))):
         for j in range(len(f3)):
             heatmap[i][j] = multivariateGaussian.log_likelihood(np.array([f1[i], 0, f3[j], 0]).reshape(1, 4), sigma, X)
-    with open(r"C:\HUJI_computer_projects\IML\ex1\heatmap_omri.npy", "wb") as f:
-        np.save(f, heatmap)
     plt.pcolormesh(f3, f1, heatmap)
     plt.title("Log Likelihood of Expected Value [f1, 0, f3, 0]")
     plt.xlabel("f3")
     plt.ylabel("f1")
     plt.show()
     # Question 6 - Maximum likelihood
-    print(np.where(heatmap == np.amax(heatmap)))
+    max_coordinates = np.where(heatmap == np.amax(heatmap))
+
+    print(f"({round(f1[max_coordinates[0]][0], 3)}, {round(f3[max_coordinates[1]][0], 3)})")
 
 
 if __name__ == '__main__':
