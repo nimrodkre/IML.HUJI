@@ -55,8 +55,8 @@ def test_multivariate_gaussian():
     f1 = np.linspace(-10, 10, 200)
     f3 = np.linspace(-10, 10, 200)
     heatmap = np.zeros([200, 200])
-    from tqdm import tqdm
-    for i in tqdm(range(len(f1))):
+
+    for i in range(len(f1)):
         for j in range(len(f3)):
             heatmap[i][j] = multivariateGaussian.log_likelihood(np.array([f1[i], 0, f3[j], 0]).reshape(1, 4), sigma, X)
     plt.pcolormesh(f3, f1, heatmap)
