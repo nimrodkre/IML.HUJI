@@ -21,13 +21,20 @@ def load_data(filename: str) -> pd.DataFrame:
     -------
     Design matrix and response vector (Temp)
     """
-    raise NotImplementedError()
+    df = pd.read_csv(filename)
+    df = df.dropna(axis=0 ,how="any")
+    df = df[df.Country != ""]
+    df = df[df.City != ""]
+    df = df[df.Year > 0]
+    df = df[df.Day > 0 and df.Day <= 31]
+    df = df[df.Month > 0 and df.Month <= 12]
+    return df
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of city temperature dataset
-    raise NotImplementedError()
+    df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\City_Temperature.csv")
 
     # Question 2 - Exploring data for specific country
     raise NotImplementedError()
