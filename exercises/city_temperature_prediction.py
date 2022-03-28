@@ -26,8 +26,14 @@ def load_data(filename: str) -> pd.DataFrame:
     df = df[df.Country != ""]
     df = df[df.City != ""]
     df = df[df.Year > 0]
-    df = df[df.Day > 0 and df.Day <= 31]
-    df = df[df.Month > 0 and df.Month <= 12]
+    df = df[df.Day > 0]
+    df = df[df.Day <= 31]
+    df = df[df.Month > 0]
+    df = df[df.Month <= 12]
+    df = df[df.Date.dt.year == df.Year]
+    df = df[df.Date.dt.month == df.Month]
+    df = df[df.Date.dt.day == df.Day]
+    df["DayOfYear"] = df.Date.df.dayofyear
     return df
 
 

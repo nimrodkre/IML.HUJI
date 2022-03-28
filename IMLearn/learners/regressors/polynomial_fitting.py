@@ -34,7 +34,7 @@ class PolynomialFitting(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        self.linear_regression.fit(self.__transform(X), Y)
+        self.linear_regression.fit(self.__transform(X), y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -50,7 +50,7 @@ class PolynomialFitting(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return self.linear_regression.predict(X)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -69,7 +69,7 @@ class PolynomialFitting(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        return self.linear_regression.loss(X, y)
 
     def __transform(self, X: np.ndarray) -> np.ndarray:
         """
