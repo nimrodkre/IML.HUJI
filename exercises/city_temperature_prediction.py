@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 import IMLearn.learners.regressors.linear_regression
 from IMLearn.learners.regressors import PolynomialFitting
 from IMLearn.utils import split_train_test
@@ -30,10 +32,10 @@ def load_data(filename: str) -> pd.DataFrame:
     df = df[df.Day <= 31]
     df = df[df.Month > 0]
     df = df[df.Month <= 12]
-    df = df[df.Date.dt.year == df.Year]
-    df = df[df.Date.dt.month == df.Month]
-    df = df[df.Date.dt.day == df.Day]
-    df["DayOfYear"] = df.Date.df.dayofyear
+    df = df[pd.to_datetime(df.Date).dt.year == df.Year]
+    df = df[pd.to_datetime(df.Date).dt.month == df.Month]
+    df = df[pd.to_datetime(df.Date).dt.day == df.Day]
+    df["DayOfYear"] = pd.to_datetime(df.Date).dt.day_of_year
     return df
 
 
@@ -43,7 +45,29 @@ if __name__ == '__main__':
     df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\City_Temperature.csv")
 
     # Question 2 - Exploring data for specific country
-    raise NotImplementedError()
+    israel_df = df[df.Country == "Israel"]
+    israel_df = israel_df[israel_df.Temp > -30]
+    temp_df = israel_df.Temp
+    israel_day_of_year = israel_df.DayOfYear
+
+    plt.scatter(israel_day_of_year, temp_df)
+    plt.title("Temperature as Function of Day of Year")
+    plt.ylabel("Temperature")
+    plt.xlabel("Day of Year")
+    plt.show()
+    plt.clf()
+
+    israel_df_month_temp = israel_df[["Temp", "Month"]]
+    month_std = israel_df_month_temp.groupby(["Month"]).agg("std")
+    plt.bar([i for i in range(1, len(month_std) + 1)], month_std.Temp)
+    plt.title("Bar Graph of STD as Function of Month")
+    plt.xlabel("Month")
+    plt.ylabel("STD")
+    plt.show()
+    plt.clf()
+
+    polynom_fitter = PolynomialFitting()
+    polynom_fitter.fit(israel_day_of_year, temp_df)
 
     # Question 3 - Exploring differences between countries
     raise NotImplementedError()
