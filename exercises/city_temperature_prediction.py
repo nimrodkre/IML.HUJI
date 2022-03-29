@@ -69,11 +69,22 @@ if __name__ == '__main__':
     plt.show()
     plt.clf()
 
-    polynom_fitter = PolynomialFitting()
-    polynom_fitter.fit(israel_day_of_year, temp_df)
 
     # Question 3 - Exploring differences between countries
-    raise NotImplementedError()
+    month_country_temp_df = df.drop(["Year", "Day", "DayOfYear"], axis=1)
+    std = month_country_temp_df.groupby(["Month", "Country"]).agg("std")
+    mean = month_country_temp_df.groupby(["Month", "Country"]).agg("mean")
+    countries_colors = {"South Africa": "blue", "Jordan": "green",
+                        "Israel": "yellow", "The Netherlands": "black"}
+    for i in range(len(countries_colors)):
+        country = mean.iloc[i]._name[1]
+        x = list(range(1, 13))
+        y = [mean.iloc[i + j * len(countries_colors)].Temp for j in range(12)]
+        y_error = [std.iloc[i + j * len(countries_colors)].Temp for j in range(12)]
+        plt.errorbar(x, y, yerr=y_error, label=country)
+    plt.legend()
+    plt.show()
+    plt.clf()
 
     # Question 4 - Fitting model for different values of `k`
     raise NotImplementedError()
