@@ -46,11 +46,14 @@ if __name__ == '__main__':
 
     # Question 2 - Exploring data for specific country
     israel_df = df[df.Country == "Israel"]
-    israel_df = israel_df[israel_df.Temp > -30]
+    israel_df = israel_df[israel_df.Temp > -70]
     temp_df = israel_df.Temp
     israel_day_of_year = israel_df.DayOfYear
-
-    plt.scatter(israel_day_of_year, temp_df)
+    year_colors = {1995: "red", 1996: "sienna", 1997: "darkorange",
+                   1998: "gold", 1999: "yellow", 2000: "lawngreen",
+                   2001: "limegreen", 2002: "springgreen", 2003: "turquoise",
+                   2004: "teal", 2005: "cyan", 2006: "skyblue", 2007: "slategray"}
+    plt.scatter(israel_df.DayOfYear, israel_df.Temp, c=israel_df.Year.map(year_colors))
     plt.title("Temperature as Function of Day of Year")
     plt.ylabel("Temperature")
     plt.xlabel("Day of Year")
