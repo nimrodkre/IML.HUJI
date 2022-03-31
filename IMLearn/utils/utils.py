@@ -1,7 +1,7 @@
 from typing import Tuple
 import numpy as np
 import pandas as pd
-
+import random
 
 def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .75) \
         -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
@@ -33,11 +33,13 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .7
         Responses of test samples
 
     """
-    train_amount = int(len(y) * train_proportion)
-    train_X = X.head(train_amount)
-    test_X = X.tail(len(X) - train_amount)
-    train_Y = y.head(train_amount)
-    test_Y = y.tail(len(y) - train_amount)
+    train_amount = int(np.ceil(len(y) * train_proportion))
+    rows_for_train = np.random.choice(np.arange(len(y)), train_amount, replace=False)
+    rows_for_test = [i for i in range(len(y)) if i not in rows_for_train]
+    train_X = X.iloc[rows_for_train]
+    test_X = X.iloc[rows_for_test]
+    train_Y = y.iloc[rows_for_train]
+    test_Y = y.iloc[rows_for_test]
     return train_X, train_Y, test_X, test_Y
 
 

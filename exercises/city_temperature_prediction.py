@@ -62,7 +62,7 @@ def q2(df):
     plt.show()
     plt.clf()
 
-def q3():
+def q3(df):
     month_country_temp_df = df.drop(["Year", "Day", "DayOfYear"], axis=1)
     std = month_country_temp_df.groupby(["Month", "Country"]).agg("std")
     mean = month_country_temp_df.groupby(["Month", "Country"]).agg("mean")
@@ -81,31 +81,14 @@ def q3():
     plt.show()
     plt.clf()
 
-if __name__ == '__main__':
-    np.random.seed(0)
-    # Question 1 - Load and preprocessing of city temperature dataset
-    df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\City_Temperature.csv")
-
-    # Question 2 - Exploring data for specific country
-    # q2(df)
-
-    # Question 3 - Exploring differences between countries
-    # q3(df)
-
-    # Question 4 - Fitting model for different values of `k`
-
+def q4(df):
     israel_df = df[df.Country == "Israel"]
-    training_set_percentage = 0.75
-    num_samples = int(len(israel_df) * training_set_percentage)
-    rows = random.sample(np.arange(0, len(israel_df)).tolist(), num_samples)
-    test_rows = [i for i in range(len(israel_df)) if i not in rows]
-    train_data = israel_df.iloc[rows]
-    test_data = israel_df.iloc[test_rows]
+    train_X, train_Y, test_X, test_Y = split_train_test(israel_df.DayOfYear, israel_df.Temp, train_proportion=0.75)
     k_to_loss = dict()
     for k in range(1, 11):
         poly_fit = PolynomialFitting(k)
-        poly_fit.fit(train_data.DayOfYear, train_data.Temp)
-        loss = poly_fit.loss(test_data.DayOfYear, test_data.Temp)
+        poly_fit.fit(train_X, train_Y)
+        loss = poly_fit.loss(test_X, test_Y)
         k_to_loss[k] = loss
     print("K to loss dict", k_to_loss)
     plt.bar(k_to_loss.keys(), k_to_loss.values())
@@ -114,5 +97,38 @@ if __name__ == '__main__':
     plt.ylabel("Loss")
     plt.show()
     plt.clf()
+
+def q5(df, k):
+    israel_df = df[df.Country == "Israel"]
+    poly_fit = PolynomialFitting(k)
+    poly_fit.fit(israel_df.DayOfYear, israel_df.Temp)
+    countries = ["South Africa", "Jordan", "The Netherlands"]
+    country_to_loss = dict()
+    for country in countries:
+        country_df = df[df.Country == country]
+        country_loss = poly_fit.loss(country_df.DayOfYear, country_df.Temp)
+        country_to_loss[country] = country_loss
+    plt.bar(country_to_loss.keys(), country_to_loss.values())
+    plt.title("Loss as Function of Country")
+    plt.xlabel("Country")
+    plt.ylabel("Loss")
+    plt.show()
+    plt.clf()
+
+
+if __name__ == '__main__':
+    np.random.seed(0)
+    # Question 1 - Load and preprocessing of city temperature dataset
+    df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\City_Temperature.csv")
+
+    # Question 2 - Exploring data for specific country
+    q2(df)
+
+    # Question 3 - Exploring differences between countries
+    q3(df)
+
+    # Question 4 - Fitting model for different values of `k`
+    q4(df)
+
     # Question 5 - Evaluating fitted model on different countries
-    raise NotImplementedError()
+    q5(df, 5)

@@ -33,9 +33,10 @@ def load_data(filename: str):
     df = df[df.price > 0]
     df = df[df.sqft_living > 0]
     df = df[df.sqft_lot > 0]
-    df = df.drop(labels=["id"], axis=1)
-    df = build_date(df)
-    df = build_zipcodes(df)
+    df = df[df.id != 0]
+    df = df.drop(labels=["id", "zipcode", "date"], axis=1)
+    # df = build_date(df)
+    # df = build_zipcodes(df)
     return df
 
 def build_date(df):
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     for p in tqdm(percentages):
         mean_loss = list()
         for i in range(10):
-            num_samples = int(len(train_X) * p / 100)
+            num_samples = int(np.ceil(len(train_X) * p / 100))
             rows = random.sample(np.arange(0, len(train_X)).tolist(), num_samples)
             train_x_fraction = train_X.iloc[rows,]
             train_y_fraction = train_Y.iloc[rows,]
