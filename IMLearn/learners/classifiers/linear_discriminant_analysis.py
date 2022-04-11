@@ -122,4 +122,5 @@ class LDA(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
+        from ...metrics import misclassification_error
         raise NotImplementedError()
