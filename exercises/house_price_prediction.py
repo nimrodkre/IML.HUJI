@@ -1,18 +1,14 @@
-from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
-from IMLearn.utils.utils import split_train_test
+from IMLearn.utils import split_train_test
 
 from typing import NoReturn
 import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 import matplotlib.pyplot as plt
 import plotly.io as pio
 pio.templates.default = "simple_white"
 import pandas as pd
 import os
-import random
+from pathlib import Path
 
 
 def load_data(filename: str):
@@ -33,25 +29,9 @@ def load_data(filename: str):
     df = df[df.price > 0]
     df = df[df.sqft_living > 0]
     df = df[df.sqft_lot > 0]
-    df = df[df.id != 0]
-    df = df.drop(labels=["id", "zipcode", "date"], axis=1)
-    # df = build_date(df)
-    # df = build_zipcodes(df)
+    df = df.drop(labels=["id", "date"], axis=1)
+    df = build_zipcodes(df)
     return df
-
-def build_date(df):
-    years = list()
-    months = list()
-    days = list()
-    for i in range(len(df)):
-        row = df.iloc[i]
-        years.append(get_year(row.date))
-        months.append(get_month(row.date))
-        days.append(get_day(row.date))
-    df["date_year"] = years
-    df["date_month"] = months
-    df["date_day"] = days
-    return df.drop(labels=["date"], axis=1)
 
 def build_zipcodes(df):
     return pd.get_dummies(df, columns=["zipcode"])
@@ -94,6 +74,8 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
         plt.xlabel(column_name)
         plt.ylabel(y._name)
         plt.rc('font', size=8)
+        if "." in column_name:
+            column_name = column_name.split(".")[0]
         plt.savefig(os.path.join(output_path, f"{y._name} as {column_name}"))
         plt.clf()
 
@@ -101,10 +83,13 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\house_prices.csv")
+
+    df = load_data(os.path.join(__file__.split("exercises")[0], "datasets", "house_prices.csv"))
 
     # Question 2 - Feature evaluation with respect to response
-    # feature_evaluation(df, df.price)
+    Path(os.path.join(__file__.split("house_price_prediction")[0], "ex2_house_graphs")).mkdir(parents=True,
+                                                                                              exist_ok=True)
+    feature_evaluation(df, df.price, os.path.join(__file__.split("house_price_prediction")[0], "ex2_house_graphs"))
 
     # Question 3 - Split samples into training- and testing sets.
     data_no_price = df.drop(labels=["price"], axis=1)
@@ -120,13 +105,12 @@ if __name__ == '__main__':
     linear_regression = LinearRegression()
     errors = list()
     means = list()
-    from tqdm import tqdm
     percentages = [p for p in range(10, 101)]
-    for p in tqdm(percentages):
+    for p in percentages:
         mean_loss = list()
         for i in range(10):
             num_samples = int(np.ceil(len(train_X) * p / 100))
-            rows = random.sample(np.arange(0, len(train_X)).tolist(), num_samples)
+            rows = np.random.choice(np.arange(0, len(train_X)).tolist(), num_samples)
             train_x_fraction = train_X.iloc[rows,]
             train_y_fraction = train_Y.iloc[rows,]
             linear_regression.fit(train_x_fraction, train_y_fraction)
@@ -134,4 +118,9 @@ if __name__ == '__main__':
         means.append(np.mean(mean_loss))
         errors.append(2 * np.std(mean_loss))
     plt.errorbar(percentages, means, errors)
+    plt.title("Loss as function of percentage of training used")
+    plt.xlabel("Percentage of training data used")
+    plt.ylabel("Loss")
     plt.show()
+
+

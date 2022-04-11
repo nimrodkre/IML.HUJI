@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
-import random
+import os
 pio.templates.default = "simple_white"
 
 
@@ -46,7 +46,10 @@ def q2(df):
                    1998: "gold", 1999: "yellow", 2000: "lawngreen",
                    2001: "limegreen", 2002: "springgreen", 2003: "turquoise",
                    2004: "teal", 2005: "cyan", 2006: "skyblue", 2007: "slategray"}
-    plt.scatter(israel_df.DayOfYear, israel_df.Temp, c=israel_df.Year.map(year_colors))
+    for year in year_colors.keys():
+        year_df = israel_df[israel_df.Year == year]
+        plt.scatter(year_df.DayOfYear, year_df.Temp, c=year_colors[year], label=year)
+    plt.legend()
     plt.title("Temperature as Function of Day of Year")
     plt.ylabel("Temperature")
     plt.xlabel("Day of Year")
@@ -90,7 +93,8 @@ def q4(df):
         poly_fit.fit(train_X, train_Y)
         loss = poly_fit.loss(test_X, test_Y)
         k_to_loss[k] = loss
-    print("K to loss dict", k_to_loss)
+    for key, val in k_to_loss.items():
+        print(f"K = {key} loss = {round(val, 2)}")
     plt.bar(k_to_loss.keys(), k_to_loss.values())
     plt.title("Loss as function of polynom degree")
     plt.xlabel("k - polynom degree")
@@ -119,7 +123,7 @@ def q5(df, k):
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of city temperature dataset
-    df = load_data(r"C:\HUJI_computer_projects\IML\IML_HUJI\datasets\City_Temperature.csv")
+    df = load_data(os.path.join(__file__.split("exercises")[0], "datasets", "City_Temperature.csv"))
 
     # Question 2 - Exploring data for specific country
     q2(df)

@@ -46,7 +46,28 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        n = len(X)
+        mean = np.mean(X, axis=0)
+        W = np.zeroes((n, n))
+        B = np.zeroes((n, n))
+        for column in X.T:
+            column_mean = np.mean(column, axis=0)
+            W += (column - column_mean).T.dot((column - column_mean))
+
+            diff_mean = (column_mean - mean).reshape(n, 1)
+            B += len(column) * (diff_mean).dot(diff_mean.T)
+
+        A = np.linalg.inv(W).dot(B)
+        eigen_values, eigen_vectors = np.linalg.eig(A)
+
+        eigen_vectors = eigen_vectors.T
+        sorted_indexes = np.argsort(abs(eigen_values))[::-1]
+        eigen_values = eigen_values[sorted_indexes]
+        eigen_vectors[sorted_indexes]
+        self.co
+
+
+
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """

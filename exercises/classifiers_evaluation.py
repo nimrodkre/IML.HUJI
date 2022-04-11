@@ -1,3 +1,8 @@
+import os.path
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
 import numpy as np
 from typing import Tuple
@@ -38,14 +43,25 @@ def run_perceptron():
     """
     for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        PATH = "C:\HUJI_computer_projects\IML\IML_HUJI\datasets"
+        data_path = os.path.join(PATH, f)
+        df = pd.DataFrame(np.load(data_path))
+        X = df.drop(labels=[2], axis=1)
+        y = df[2]
 
         # Fit Perceptron and record loss in each fit iteration
         losses = []
-        raise NotImplementedError()
+        def callback(preceptron, dummy1, dummy2):
+            losses.append(preceptron.loss(X, y))
+        Perceptron(callback=callback).fit(X, y)
 
-        # Plot figure
-        raise NotImplementedError()
+        iterations = [i+1 for i in range(len(losses))]
+        plt.plot(iterations, losses)
+        plt.title(f"{n} Loss as function of iteration")
+        plt.xlabel("Iteration")
+        plt.ylabel("Loss")
+        plt.show()
+        plt.clf()
 
 
 def compare_gaussian_classifiers():
