@@ -88,13 +88,14 @@ class Perceptron(BaseEstimator):
         self.fitted_ = True
         if self.include_intercept_:
             X = np.c_[X, np.ones(len(X))]
-        self.coefs_ = np.zeros(len(X[0]))
+        self.coefs_ = np.zeros(X.shape[1])
         for t in range(self.max_iter_):
             sample_misclassified = False
             for i in range(len(X)):
                 if np.dot(self.coefs_, X[i]) * y[i] <= 0:
                     self.coefs_ = self.coefs_ + y[i] * X[i]
                     sample_misclassified = True
+                    break
             self.callback_(self, X, y)
             if not sample_misclassified:
                 break

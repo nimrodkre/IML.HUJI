@@ -39,7 +39,12 @@ class GaussianNaiveBayes(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.classes_ = sorted(np.unique(y))
+        self.mu_ = np.array([X[y == cls].mean(axis=0) for cls in self.classes_])
+        self.pi_ = np.array([(y == cls).mean() for cls in self.classes_])
+        self.vars_ = np.zeros(shape=(len(self.classes_), X.shape[1]))
+        for k, cls in enumerate(self.classes_):
+            self.vars_[k, :] = np.var(X[y == cls], axis=0, ddof=1)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -55,7 +60,8 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        likelihoods = self.likelihood(X)
+        return np.take(self.classes_, np.argmax(likelihoods, axis=1))
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +81,13 @@ class GaussianNaiveBayes(BaseEstimator):
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        result = np.zeros(shape=(X.shape[0], len(self.classes_)))
+        for i in range(len(self.classes_)):
+            denominator = 1 / (np.power(2 * np.pi, X.shape[1] / 2) * np.sqrt(np.product(self.vars_[i])))
+            shifted_x = np.power(X - self.mu_[i], 2) / self.vars_[i]
+            mone = np.exp(-0.5 * np.sum(shifted_x, axis=1)) * self.pi_[i]
+            result[:, i] = mone * denominator
+        return result
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -95,4 +107,4 @@ class GaussianNaiveBayes(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y, self.predict(X))

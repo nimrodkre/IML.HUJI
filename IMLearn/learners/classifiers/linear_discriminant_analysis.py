@@ -46,27 +46,21 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        n = len(X)
-        mean = np.mean(X, axis=0)
-        W = np.zeroes((n, n))
-        B = np.zeroes((n, n))
-        for column in X.T:
-            column_mean = np.mean(column, axis=0)
-            W += (column - column_mean).T.dot((column - column_mean))
+        self.classes_ = sorted(np.unique(y))
+        self.mu_ = np.array([X[y==cls].mean(axis=0) for cls in self.classes_])
+        self.pi_ = np.array([(y == cls).mean() for cls in self.classes_])
+        self.cov_ = 0
 
-            diff_mean = (column_mean - mean).reshape(n, 1)
-            B += len(column) * (diff_mean).dot(diff_mean.T)
+        for i, cls in enumerate(self.classes_):
+            shifted = X[y == int(cls)]
+            for j in range(len(shifted)):
+                shifted[j] -= self.mu_[i]
+            self.cov_ += shifted.T @ shifted
 
-        A = np.linalg.inv(W).dot(B)
-        eigen_values, eigen_vectors = np.linalg.eig(A)
+        self.cov_ /= (len(y) - len(self.classes_))
+        self._cov_inv = np.linalg.inv(self.cov_)
 
-        eigen_vectors = eigen_vectors.T
-        sorted_indexes = np.argsort(abs(eigen_values))[::-1]
-        eigen_values = eigen_values[sorted_indexes]
-        eigen_vectors[sorted_indexes]
-        self.co
-
-
+        self.fitted_ = True
 
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
@@ -83,7 +77,8 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        likelihoods = self.likelihood(X)
+        return np.take(self.classes_, np.argmax(likelihoods, axis=1))
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -102,8 +97,13 @@ class LDA(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-
-        raise NotImplementedError()
+        result = np.zeros(shape=(X.shape[0], len(self.classes_)))
+        for i in range(len(self.classes_)):
+            shifted_X = (X - self.mu_[i]).T
+            denominator = np.sqrt(np.linalg.det(self.cov_) * np.power(2 * np.pi, X.shape[1]))
+            exponent = np.exp(-0.5 * np.sum(shifted_X * (self._cov_inv @ shifted_X), axis=0))
+            result[:, i] = (self.pi_[i] * exponent / denominator)
+        return result
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -123,4 +123,4 @@ class LDA(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y,self.predict(X))
