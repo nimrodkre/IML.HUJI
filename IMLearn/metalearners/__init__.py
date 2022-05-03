@@ -1,3 +1,3 @@
-from .adaboost import AdaBoost
+from IMLearn.metalearners.adaboost import AdaBoost
 
 __all__ = ["AdaBoost"]
