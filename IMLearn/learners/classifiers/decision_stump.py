@@ -45,9 +45,16 @@ class DecisionStump(BaseEstimator):
         min_label = 0
         for i in range(num_labels):
             thr, thr_err = self._find_threshold(X[:,i], y, 1)
-            if thr_err < min_error:
-                min_error = thr_err
-                min_error_threshold = thr
+            thr2, thr_err2 = self._find_threshold(X[:, i], y, -1)
+            if min(thr_err, thr_err2) < min_error:
+                if thr_err2 < thr_err:
+                    min_error = thr_err2
+                    min_error_threshold = thr2
+                    self.sign_ = -1
+                else:
+                    min_error = thr_err
+                    min_error_threshold = thr
+                    self.sign_ = 1
                 min_label = i
         self.j_ = min_label
         self.sign_ = 1
@@ -75,14 +82,15 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        y = np.ndarray(X.shape[0])
-        relevant_x_data = X[:,self.j_]
-        for i, value in enumerate(relevant_x_data):
-            if value >= self.threshold_:
-                y[i] = self.sign_
-            else:
-                y[i] = -self.sign_
-        return y
+        return self.sign_ * ((X[:, self.j_] >= self.threshold_) * 2 - 1)
+        # y = np.ndarray(X.shape[0])
+        # relevant_x_data = X[:,self.j_]
+        # for i, value in enumerate(relevant_x_data):
+        #     if value >= self.threshold_:
+        #         y[i] = self.sign_
+        #     else:
+        #         y[i] = -self.sign_
+        # return y
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -115,17 +123,24 @@ class DecisionStump(BaseEstimator):
         which equal to or above the threshold are predicted as `sign`
         """
         values, labels = zip(*sorted(zip(values, labels)))
-        min_error = 100000000
-        min_error_threshold = 100000000
-        for i in range(len(values)):
-            right_error = misclassification_error(labels[i:], [sign] * (len(values) - i), True)
-            left_error = misclassification_error(labels[:i], [-sign] * i, True)
-            error = max(left_error, right_error)
+
+        error = 0
+        for label in labels:
+            if np.sign(label) == sign:
+                error -= np.abs(label / len(values))
+            else:
+                error += np.abs(label / len(values))
+        min_error = error
+        min_error_threshold = values[0]
+        for i in range(1, len(values)):
+            if np.sign(labels[i - 1]) == -sign:
+                error -= np.abs(labels[i - 1]) / len(values)
+            else:
+                error += np.abs(labels[i - 1]) / len(values)
             if error < min_error:
                 min_error = error
                 min_error_threshold = values[i]
         return min_error_threshold, min_error
-
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """

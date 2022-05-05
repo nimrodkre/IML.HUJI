@@ -3,6 +3,7 @@ from typing import Tuple
 from IMLearn.metalearners.adaboost import AdaBoost
 from IMLearn.learners.classifiers import DecisionStump
 from utils import *
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -42,7 +43,23 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
     (train_X, train_y), (test_X, test_y) = generate_data(train_size, noise), generate_data(test_size, noise)
 
     # Question 1: Train- and test errors of AdaBoost in noiseless case
-    raise NotImplementedError()
+
+    test_losses = []
+    train_losses = []
+    ada = AdaBoost(DecisionStump, n_learners)
+    ada.fit(train_X, train_y)
+    from tqdm import tqdm
+    for T in tqdm(range(1, n_learners + 1)):
+        test_losses.append(ada.partial_loss(test_X, test_y, T))
+        train_losses.append(ada.partial_loss(train_X, train_y, T))
+
+    plt.scatter(list(range(1, n_learners + 1)), test_losses, c="blue", label="test", s=1)
+    plt.scatter(list(range(1, n_learners + 1)), train_losses, c="red", label="train", s=1)
+    plt.title("Loss as function of number of models")
+    plt.ylabel("loss")
+    plt.xlabel("number of models")
+    plt.legend()
+    plt.show()
 
     # Question 2: Plotting decision surfaces
     T = [5, 50, 100, 250]
@@ -58,4 +75,4 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
 
 if __name__ == '__main__':
     np.random.seed(0)
-    fit_and_evaluate_adaboost(0.5)
+    fit_and_evaluate_adaboost(0)

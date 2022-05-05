@@ -52,12 +52,14 @@ class AdaBoost(BaseEstimator):
         self.weights_ = np.zeros(self.iterations_)
         self.D_ = np.ones(m) / m
         self.models_ = [None] * self.iterations_
-        for t in range(self.iterations_):
-            self.models_[t] = self.wl_(self.D_, X, y)
+        from tqdm import tqdm
+        for t in tqdm(range(self.iterations_)):
+            self.models_[t] = self.wl_()
+            self.models_[t].fit(X, y * self.D_)
             y_pred = self.models_[t].predict(X)
             epsilon_t = np.sum(self.D_[y != y_pred])
             self.weights_[t] = 0.5 * np.log(1 / epsilon_t - 1)
-            self.D_ *= np.exp(y * -self.weights_[t] * y_pred)
+            self.D_ *= np.exp(-y * self.weights_[t] * y_pred)
             self.D_ /= np.sum(self.D_)
 
 
@@ -138,4 +140,5 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return misclassification_error(self.partial_predict(X, T), y, True)
+        y_pred = self.partial_predict(X, T)
+        return misclassification_error(y_pred, y, True)
