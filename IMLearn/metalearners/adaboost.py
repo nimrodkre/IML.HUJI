@@ -52,8 +52,7 @@ class AdaBoost(BaseEstimator):
         self.weights_ = np.zeros(self.iterations_)
         self.D_ = np.ones(m) / m
         self.models_ = [None] * self.iterations_
-        from tqdm import tqdm
-        for t in tqdm(range(self.iterations_)):
+        for t in range(self.iterations_):
             self.models_[t] = self.wl_()
             self.models_[t].fit(X, y * self.D_)
             y_pred = self.models_[t].predict(X)
@@ -77,7 +76,7 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        self.partial_predict(X, self.iterations_)
+        return self.partial_predict(X, self.iterations_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
