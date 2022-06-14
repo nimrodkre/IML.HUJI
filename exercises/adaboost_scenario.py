@@ -73,7 +73,7 @@ def q4(ada, train_X, test_X, train_y, t, noise, accuracy=0):
     else:
         fig.add_trace(go.Scatter(x=train_X[:, 0], y=train_X[:, 1], mode="markers", showlegend=False,
                                  marker=dict(color=train_y, symbol=symbols[train_y.astype(np.int32) + 1],
-                                             colorscale=[custom[0], custom[-1]], size=scores * 2
+                                             colorscale=[custom[0], custom[-1]], size=scores * 5
                                              )))
 
     import plotly.offline
@@ -131,4 +131,4 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
 if __name__ == '__main__':
     np.random.seed(0)
     fit_and_evaluate_adaboost(0)
-    fit_and_evaluate_adaboost(0.4)
+    # fit_and_evaluate_adaboost(0.4)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Callable, NoReturn
 import numpy as np
+import sys
 
 from IMLearn.base import BaseModule, BaseLR
 from .learning_rate import FixedLR
@@ -119,4 +120,33 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        best_weight = f.weights
+        best_weight_score = f.compute_output(X=X, y=y)
+        sum_weights = np.zeros(f.weights.shape)
+        n = 0
+        for t in range(self.max_iter_):
+            n += 1
+            prev_weight = f.weights
+            eta = self.learning_rate_.lr_step(t=t)
+            grad = f.compute_jacobian(X=X, y=y)
+            f.weights = f.weights - eta * grad
+
+            sum_weights += f.weights
+            current_output = f.compute_output(X=X, y=y)
+            if current_output < best_weight_score:
+                best_weight = f.weights
+                best_weight_score = current_output
+
+            delta = np.linalg.norm(f.weights - prev_weight, ord=2)
+            print(np.linalg.norm(f.weights - prev_weight, ord=2), self.tol_)
+            if np.linalg.norm(f.weights - prev_weight, ord=2) < self.tol_:
+                return
+            self.callback_(solver=self, weights=f.weights, val=current_output, grad=grad, t=t, eta=eta, delta=delta)
+        if self.out_type_ == "best":
+            return best_weight
+        elif self.out_type_ == "last":
+            return f.weights
+        else:
+            return sum_weights / n
+
+

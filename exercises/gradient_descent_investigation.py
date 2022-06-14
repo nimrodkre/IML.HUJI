@@ -6,6 +6,8 @@ from IMLearn import BaseModule
 from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
 from IMLearn.desent_methods.modules import L1, L2
 from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
+import plotly.offline
+import matplotlib.pyplot as plt
 from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
@@ -73,25 +75,55 @@ def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarra
     weights: List[np.ndarray]
         Recorded parameters
     """
-    raise NotImplementedError()
+    values = list()
+    weigths = list()
+    def callback(**kwargs):
+        values.append(kwargs["val"])
+        weigths.append(kwargs["weights"])
+    return callback, values, weigths
 
 
 def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                  etas: Tuple[float] = (1, .1, .01, .001)):
-    raise NotImplementedError()
+    callback, values, weights = get_gd_state_recorder_callback()
+    for regularizer in [L1, L2]:
+        for eta in etas:
+            reg = regularizer(init)
+            gradient = GradientDescent(FixedLR(eta), callback=callback)
+            gradient.fit(reg, None, None)
+            path = np.stack(weights, axis=0)
+            fig = plot_descent_path(regularizer, path, f"{type(regularizer)}, {eta}")
+            if regularizer is L1:
+                plotly.offline.plot(fig,
+                                    filename=f"C:\HUJI_computer_projects\IML\ex6\pickeling\check_type_L1_{eta}.html")
+            else:
+                plotly.offline.plot(fig,
+                                    filename=f"C:\HUJI_computer_projects\IML\ex6\pickeling\check_type_L2_{eta}.html")
+            plt.scatter(list(range(len(values))), values)
+            plt.savefig(fr"C:\HUJI_computer_projects\IML\ex6\pickeling\values_type_L2_{eta}.jpg")
+            plt.clf()
+            values.clear()
+            weights.clear()
+
+
 
 
 def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
                                     eta: float = .1,
                                     gammas: Tuple[float] = (.9, .95, .99, 1)):
-    # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
-    raise NotImplementedError()
-
-    # Plot algorithm's convergence for the different values of gamma
-    raise NotImplementedError()
-
-    # Plot descent path for gamma=0.95
-    raise NotImplementedError()
+    callback, values, weights = get_gd_state_recorder_callback()
+    for gamma in [1]:
+        reg = L1(init)
+        lt = ExponentialLR(eta, gamma)
+        gradient = GradientDescent(lt, callback=callback)
+        gradient.fit(reg, None, None)
+        path = np.stack(weights, axis=0)
+        fig = plot_descent_path(L1, path, f"exponential, gamma: {gamma}")
+        plotly.offline.plot(fig,
+                            filename=f"C:\HUJI_computer_projects\IML\ex6\pickeling\exponential_gamma_{gamma}.html")
+        plt.scatter(list(range(len(values))), values)
+        plt.savefig(fr"C:\HUJI_computer_projects\IML\ex6\pickeling\values_exponential_gamma_{gamma}.jpg")
+        plt.clf()
 
 
 def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8) -> \
@@ -140,6 +172,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
+    # compare_fixed_learning_rates()
     compare_exponential_decay_rates()
     fit_logistic_regression()
