@@ -58,7 +58,11 @@ class StochasticGradientDescent:
             Callable function receives as input any argument relevant for the current GD iteration. Arguments
             are specified in the `GradientDescent.fit` function
         """
-        raise NotImplementedError()
+        self.learning_rate_ = learning_rate
+        self.tol_ = tol
+        self.max_iter_ = max_iter
+        self.batch_size_ = batch_size
+        self.callback_ = callback
 
     def fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray):
         """
@@ -107,8 +111,25 @@ class StochasticGradientDescent:
             - batch_indices: np.ndarray of shape (n_batch,)
                 Sample indices used in current SGD iteration
         """
-        raise NotImplementedError()
+        best_weight_score = f.compute_output(X=X, y=y)
+        sum_weights = np.zeros(f.weights.shape)
+        n = 0
+        for t in range(self.max_iter_):
+            n += 1
+            prev_weight = f.weights
+            val, jac, eta = self._partial_fit(f, X, y)
 
+            sum_weights += f.weights
+            current_output = f.compute_output(X=X, y=y)
+            if current_output < best_weight_score:
+                best_weight_score = current_output
+
+            delta = np.linalg.norm(f.weights - prev_weight, ord=2)
+            if np.linalg.norm(f.weights - prev_weight, ord=2) < self.tol_:
+                break
+            self.callback_(solver=self, weights=f.weights, val=current_output,
+                           grad=jac, t=t, eta=eta, delta=delta)
+        return f.weights
     def _partial_fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray, t: int) -> Tuple[np.ndarray, np.ndarray, float]:
         """
         Perform a SGD iteration over given samples
@@ -138,4 +159,11 @@ class StochasticGradientDescent:
         eta: float
             learning rate used at current iteration
         """
-        raise NotImplementedError()
+        idx = np.random.sample(range(len(X)), self.batch_size_)
+        X = X[idx,:]
+        y = y[idx,:]
+        eta = self.learning_rate_.lr_step(t=t)
+        grad = f.compute_jacobian(X=X, y=y)
+        f.weights = f.weights - eta * grad / np.linalg.norm(grad)
+        return f.weights, grad, eta
+
