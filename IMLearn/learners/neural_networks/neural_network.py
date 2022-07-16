@@ -31,12 +31,13 @@ class NeuralNetwork(BaseEstimator, BaseModule):
                  solver: Union[StochasticGradientDescent, GradientDescent]):
         super().__init__()
         self.modules_ = modules
-        self._lossFunc = loss_fn
+        self.loss_func_ = loss_fn
         self._solver = solver
-        self.zs= []
-        self.As = []
+        self.post_activation_values = list()
 
-
+    def _labels_from_y(self, y):
+        y_labels = pd.get_dummies(y)
+        return y_labels.to_numpy()
 
     # region BaseEstimator implementations
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
@@ -51,8 +52,8 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        yDummis = pd.get_dummies(y).to_numpy()
-        self._solver.fit(self,X,yDummis)
+        y_labels = self._labels_from_y(y)
+        self._solver.fit(self, X, y_labels)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -68,11 +69,10 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         responses : ndarray of shape (n_samples, )
             Predicted labels of given samples
         """
-        yPredRaw = self.compute_prediction(X)
-        yPredDummis = softmax(yPredRaw)
-        yPredDummis[yPredDummis <= 0.5] = 0
-        yPredDummis[yPredDummis > 0.5] = 1
-        return  pd.DataFrame(yPredDummis).idxmax(axis=1).to_numpy()#pd.Series(pd.DataFrame(yPredDummis).columns[np.where(yPredDummis != 0)[1]]).to_numpy()
+        y_pred = self.compute_prediction(X)
+        y_pred = softmax(y_pred)
+        y_pred = np.where(y_pred <= 0.5, 0, 1)
+        return np.argmax(y_pred, axis=1)
 
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -92,8 +92,9 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         loss : float
             Performance under specified loss function
         """
-        yDummis = pd.get_dummies(y).to_numpy()
-        return self._lossFunc.compute_output(self.compute_prediction(X),yDummis)
+        y_labels = self._labels_from_y(y)
+        y_pred = self.compute_prediction(X)
+        return self.loss_func_.compute_output(y_pred, y_labels)
     # endregion
 
     # region BaseModule implementations
@@ -124,9 +125,9 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         z = [None]
         for layer in self.modules_:
             last = layer.compute_output(last, z)
-            self.As.append(last)
+            self.post_activation_values.append(last)
             self.zs.append(z[0])
-        return self._lossFunc.compute_output(last, y)
+        return self.loss_func_.compute_output(last, y)
 
     def compute_prediction(self, X: np.ndarray):
         """
@@ -171,7 +172,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         `self.pre_activations_` and `self.post_activations_`
         """
         dws = []
-        dAprev = self._lossFunc.compute_jacobian(self.As[-1], y)
+        dAprev = self.loss_func_.compute_jacobian(self.As[-1], y)
 
         for i in reversed(range(1,len(self.As))):
             z = self.zs[i]
