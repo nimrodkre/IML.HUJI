@@ -47,7 +47,7 @@ class FullyConnectedLayer(BaseModule):
             dim = input_dim + 1
         self.weights = np.random.normal(0, 1 / input_dim, (output_dim, dim))
 
-    def compute_output(self, X: np.ndarray, z=None, **kwargs) -> np.ndarray:
+    def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
         Compute activation(weights @ x) for every sample x: output value of layer at point
         self.weights and given input
@@ -62,16 +62,13 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (n_samples, output_dim)
             Value of function at point self.weights
         """
-        if not z:
-            z=[None]
         if self.include_intercept_:
-            X = np.c_[np.ones(X.shape[0]),X]
-        z[0] = X @ self.weights.T
+            X = np.c_[np.ones(X.shape[0]), X]
         if self.activation_:
-            return self.activation_.compute_output(z[0])
-        return z[0]
+            return self.activation_.compute_output(X @ self.weights.T)
+        return X @ self.weights.T
 
-    def compute_jacobian(self, X: np.ndarray, z, **kwargs) -> np.ndarray:
+    def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
         Compute module derivative with respect to self.weights at point self.weights
 
@@ -85,9 +82,6 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (input_dim, n_samples)
             Derivative with respect to self.weights at point self.weights
         """
-
-        if self.activation_:
-            return  (X * self.activation_.compute_jacobian(z)).T
         return X.T
 
 

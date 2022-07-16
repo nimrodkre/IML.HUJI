@@ -33,7 +33,7 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         self.modules_ = modules
         self.loss_func_ = loss_fn
         self._solver = solver
-        self.post_activation_values = list()
+        self.post_activations = list()
 
     def _labels_from_y(self, y):
         y_labels = pd.get_dummies(y)
@@ -119,15 +119,13 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         -----
         Function stores all intermediate values in the `self.pre_activations_` and `self.post_activations_` arrays
         """
-        last = X
-        self.As=[last]
-        self.zs=[None]
-        z = [None]
+        self.post_activations.clear()
+        self.post_activations.append(X)
+        output = X
         for layer in self.modules_:
-            last = layer.compute_output(last, z)
-            self.post_activation_values.append(last)
-            self.zs.append(z[0])
-        return self.loss_func_.compute_output(last, y)
+            output = layer.compute_output(output)
+            self.post_activations.append(output)
+        return self.loss_func_.compute_output(self.post_activations[-1], y)
 
     def compute_prediction(self, X: np.ndarray):
         """
@@ -144,11 +142,10 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         output : ndarray of shape (n_samples, n_classes)
             Network's output values prior to the call of the loss function
         """
-
-        last = X
-        for layer in self.modules_:
-            last = layer.compute_output(last)
-        return last
+        output = X
+        for module in self.modules_:
+            output = module.compute_output(output)
+        return output
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -171,25 +168,24 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         Function depends on values calculated in forward pass and stored in
         `self.pre_activations_` and `self.post_activations_`
         """
-        dws = []
-        dAprev = self.loss_func_.compute_jacobian(self.As[-1], y)
+        deriv = self.loss_func_.compute_jacobian(self.post_activations[-1], y)
+        derivatives = list()
 
-        for i in reversed(range(1,len(self.As))):
-            z = self.zs[i]
-            A = self.As[i-1]
-            layer = self.modules_[i-1]
-            w=layer.weights
-            if layer.include_intercept_:
-                w = w[:,1:]
-                A = np.c_[np.ones(A.shape[0]), A]
-            jack = layer.compute_jacobian(dAprev,z)
-            dA = jack.T @ w
-            dw = jack @ A
-            dws.append(dw)
-            dAprev=dA
-        return self._flatten_parameters(dws)
+        for i in range(len(self.modules_)):
+            module = self.modules_[len(self.modules_) - i - 1]
+            weights = module.weights
+            activation = self.post_activations[len(self.modules_) - i - 1]
+            if module.include_intercept_:
+                weights, activation = self._intercept(weights, activation)
+            derivatives.append((module.compute_jacobian(deriv)) @ activation)
+            deriv = (module.compute_jacobian(deriv)).T @ weights
+        return self._flatten_parameters(derivatives)
 
+    def _intercept(self, weights, activation):
+        return np.delete(weights, 0, axis=1), self._add_column(activation)
 
+    def _add_column(self, activation):
+        return np.c_[np.ones(activation.shape[0]), activation]
 
     @property
     def weights(self) -> np.ndarray:

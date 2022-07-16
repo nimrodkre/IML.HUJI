@@ -7,7 +7,7 @@ from IMLearn.learners.neural_networks.neural_network import NeuralNetwork
 from IMLearn.desent_methods import GradientDescent, FixedLR
 from IMLearn.utils.utils import split_train_test
 from utils import *
-
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
@@ -92,6 +92,53 @@ def animate_decision_boundary(nn: NeuralNetwork, weights: List[np.ndarray], lims
         animation_to_gif(fig, save_name, 200, width=400, height=400)
 
 
+def get_callback(**kwargs):
+    values = list()
+    weights = list()
+
+    def callback(**kwargs):
+        values.append(kwargs["val"])
+        weights.append(kwargs["weights"])
+
+    return callback, values, weights
+
+def __q1(hidden_size=16):
+    # ---------------------------------------------------------------------------------------------#
+    # Question 1: Fitting simple network with two hidden layers                                    #
+    # ---------------------------------------------------------------------------------------------#
+    callback, values, weights = get_callback()
+    relu1 = ReLU()
+    relu2 = ReLU()
+    loss = CrossEntropyLoss()
+    lr = FixedLR(0.1)
+    layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=hidden_size, activation=relu1, include_intercept=True)
+    hidden_one = FullyConnectedLayer(input_dim=hidden_size, output_dim=hidden_size, activation=relu2, include_intercept=True)
+    layer_two = FullyConnectedLayer(input_dim=hidden_size, output_dim=3, include_intercept=False)
+    gradient = GradientDescent(learning_rate=lr, max_iter=5000, callback=callback)
+    nn = NeuralNetwork(modules=[layer_one, hidden_one, layer_two], loss_fn=loss, solver=gradient)
+    nn.fit(train_X, train_y)
+    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
+    import plotly.offline
+
+    plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\ex1_{hidden_size}.html")
+    plt.title(f"Loss as function of iteration_{hidden_size}")
+    plt.xlabel("iteration")
+    plt.ylabel("loss")
+    plt.scatter(list(range(len(values))), values)
+    plt.show()
+    plt.clf()
+    # ---------------------------------------------------------------------------------------------#
+    # Question 2: Fitting a network with no hidden layers                                          #
+    # ---------------------------------------------------------------------------------------------#
+    layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=3, activation=relu1, include_intercept=True)
+    nn = NeuralNetwork(modules=[layer_one], loss_fn=loss, solver=gradient)
+    nn.fit(train_X, train_y)
+    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
+    import plotly.offline
+
+    plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\ex2_{hidden_size}.html")
+
+
 if __name__ == '__main__':
     np.random.seed(0)
 
@@ -110,27 +157,8 @@ if __name__ == '__main__':
     # ---------------------------------------------------------------------------------------------#
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
-    relu1 = ReLU()
-    relu2 = ReLU()
-    loss = CrossEntropyLoss()
-    lr = FixedLR(0.1)
-    layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=16, activation=relu1, include_intercept=True)
-    hidden_one = FullyConnectedLayer(input_dim=16, output_dim=16, activation=relu2, include_intercept=True)
-    layer_two = FullyConnectedLayer(input_dim=16, output_dim=3, include_intercept=False)
-    gradient = GradientDescent(learning_rate=lr, max_iter=5000)
-    nn = NeuralNetwork(modules=[layer_one, hidden_one, layer_two], loss_fn=loss, solver=gradient)
-    nn.fit(train_X, train_y)
-    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
-    import plotly.offline
-
-    plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\try.html")
-
-    # ---------------------------------------------------------------------------------------------#
-    # Question 2: Fitting a network with no hidden layers                                          #
-    # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
-
+    __q1(16)
     # ---------------------------------------------------------------------------------------------#
     # Question 3+4: Plotting network convergence process                                           #
     # ---------------------------------------------------------------------------------------------#
-    raise NotImplementedError()
+    __q1(6)
