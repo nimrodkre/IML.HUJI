@@ -105,16 +105,25 @@ if __name__ == '__main__':
                                marker=dict(color=train_y, colorscale=custom, line=dict(color="black", width=1)))],
               layout=go.Layout(title=r"$\text{Train Data}$", xaxis=dict(title=r"$x_1$"), yaxis=dict(title=r"$x_2$"),
                                width=400, height=400))\
-        .write_image(f"../figures/nonlinear_data.png")
+        .write_image(fr"C:\HUJI_computer_projects\IML\ex7\data\nonlinear_data.png")
 
     # ---------------------------------------------------------------------------------------------#
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
-    hidden_one = FullyConnectedLayer(intput_dim=16, output_dim=16, activation=ReLU, include_intercept=True)
-    hidden_two = FullyConnectedLayer(intput_dim=16, output_dim=16, activation=ReLU, include_intercept=True)
-    gradient = GradientDescent(learning_rate=FixedLR(0.1), max_iter=5000)
-    nn = NeuralNetwork(modules=[hidden_one, hidden_two], loss_fn=CrossEntropyLoss, solver=gradient)
-    plot_decision_boundary(nn, lims, train_X, train_y, title="Test", save_name="None.gif")
+    relu1 = ReLU()
+    relu2 = ReLU()
+    loss = CrossEntropyLoss()
+    lr = FixedLR(0.1)
+    layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=16, activation=relu1, include_intercept=True)
+    hidden_one = FullyConnectedLayer(input_dim=16, output_dim=16, activation=relu2, include_intercept=True)
+    layer_two = FullyConnectedLayer(input_dim=16, output_dim=3, include_intercept=False)
+    gradient = GradientDescent(learning_rate=lr, max_iter=5000)
+    nn = NeuralNetwork(modules=[layer_one, hidden_one, layer_two], loss_fn=loss, solver=gradient)
+    nn.fit(train_X, train_y)
+    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
+    import plotly.offline
+
+    plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\try.html")
 
     # ---------------------------------------------------------------------------------------------#
     # Question 2: Fitting a network with no hidden layers                                          #
