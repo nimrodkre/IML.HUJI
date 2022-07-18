@@ -48,10 +48,10 @@ def load_mnist() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
             # First 8 bytes are magic_number, n_labels
             return np.frombuffer(f.read(), 'B', offset=8)
 
-    return (load_images('../datasets/mnist-train-images.gz'),
-            load_labels('../datasets/mnist-train-labels.gz'),
-            load_images('../datasets/mnist-test-images.gz'),
-            load_labels('../datasets/mnist-test-labels.gz'))
+    return (load_images("C:\HUJI_computer_projects\IML\IML_HUJI\datasets\mnist-train-images.gz"),
+            load_labels('C:\HUJI_computer_projects\IML\IML_HUJI\datasets\mnist-train-labels.gz'),
+            load_images('C:\HUJI_computer_projects\IML\IML_HUJI\datasets\mnist-test-images.gz'),
+            load_labels('C:\HUJI_computer_projects\IML\IML_HUJI\datasets\mnist-test-labels.gz'))
 
 
 def plot_images_grid(images: np.ndarray, title: str = ""):
@@ -91,8 +91,20 @@ if __name__ == '__main__':
     # Question 5+6+7: Network with ReLU activations using SGD + recording convergence              #
     # ---------------------------------------------------------------------------------------------#
     # Initialize, fit and test network
-    raise NotImplementedError()
-
+    hidden_size = 64
+    relu1 = ReLU()
+    relu2 = ReLU()
+    lr = FixedLR(0.1)
+    loss = CrossEntropyLoss()
+    layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=hidden_size, activation=relu1,
+                                    include_intercept=True)
+    hidden_one = FullyConnectedLayer(input_dim=hidden_size, output_dim=hidden_size, activation=relu2,
+                                     include_intercept=True)
+    layer_two = FullyConnectedLayer(input_dim=hidden_size, output_dim=10, include_intercept=False)
+    gradient = StochasticGradientDescent(learning_rate=lr, max_iter=5000, batch_size=256)
+    nn = NeuralNetwork(modules=[layer_one, hidden_one, layer_two], loss_fn=loss, solver=gradient)
+    nn.fit(train_X, train_y)
+    loss = nn._loss(test_X, test_y)
     # Plotting convergence process
     raise NotImplementedError()
 

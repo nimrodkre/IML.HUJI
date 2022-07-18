@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+
 from IMLearn.base.base_module import BaseModule
 from IMLearn.metrics.loss_functions import cross_entropy, softmax
 
@@ -45,7 +47,7 @@ class FullyConnectedLayer(BaseModule):
         dim = self.input_dim_
         if self.include_intercept_:
             dim = input_dim + 1
-        self.weights = np.random.normal(0, 1 / input_dim, (output_dim, dim))
+        self.weights = np.random.normal(0, 1 / input_dim, (dim, self.output_dim_))
 
     def compute_output(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -64,9 +66,12 @@ class FullyConnectedLayer(BaseModule):
         """
         if self.include_intercept_:
             X = np.c_[np.ones(X.shape[0]), X]
+        wX = X @ self.weights
+        if "pre" in kwargs.keys():
+            kwargs["pre"][0] = wX
         if self.activation_:
-            return self.activation_.compute_output(X @ self.weights.T)
-        return X @ self.weights.T
+            return self.activation_.compute_output(wX)
+        return wX
 
     def compute_jacobian(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -82,7 +87,9 @@ class FullyConnectedLayer(BaseModule):
         output: ndarray of shape (input_dim, n_samples)
             Derivative with respect to self.weights at point self.weights
         """
-        return X.T
+        if self.activation_:
+            return self.activation_.compute_jacobian(X)
+        return np.ones(X.shape)
 
 
 class ReLU(BaseModule):
@@ -138,7 +145,7 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples,)
             cross-entropy loss value of given X and y
         """
-        return cross_entropy(y, softmax(X))
+        return cross_entropy(pd.get_dummies(y).to_numpy(), softmax(X))
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -154,4 +161,4 @@ class CrossEntropyLoss(BaseModule):
         output: ndarray of shape (n_samples, input_dim)
             derivative of cross-entropy loss with respect to given input
         """
-        return softmax(X) - y
+        return softmax(X) - pd.get_dummies(y).to_numpy()

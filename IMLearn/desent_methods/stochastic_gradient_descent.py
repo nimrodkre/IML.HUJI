@@ -117,7 +117,7 @@ class StochasticGradientDescent:
         for t in range(self.max_iter_):
             n += 1
             prev_weight = f.weights
-            val, jac, eta = self._partial_fit(f, X, y)
+            val, jac, eta = self._partial_fit(f, X, y, t)
 
             sum_weights += f.weights
             current_output = f.compute_output(X=X, y=y)
@@ -159,11 +159,11 @@ class StochasticGradientDescent:
         eta: float
             learning rate used at current iteration
         """
-        idx = np.random.sample(range(len(X)), self.batch_size_)
-        X = X[idx,:]
-        y = y[idx,:]
+        idx = np.random.choice(range(len(X)), self.batch_size_)
+        X_temp = X[idx,:]
+        y_temp = y[idx,:]
         eta = self.learning_rate_.lr_step(t=t)
-        grad = f.compute_jacobian(X=X, y=y)
+        grad = f.compute_jacobian(X=X_temp, y=y_temp)
         f.weights = f.weights - eta * grad / np.linalg.norm(grad)
         return f.weights, grad, eta
 
