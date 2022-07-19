@@ -94,30 +94,31 @@ def animate_decision_boundary(nn: NeuralNetwork, weights: List[np.ndarray], lims
 
 def get_callback(**kwargs):
     values = list()
-    weights = list()
+    grad_norm = list()
 
     def callback(**kwargs):
         values.append(kwargs["val"])
-        weights.append(kwargs["weights"])
+        grad_norm.append(np.linalg.norm(kwargs["weights"]))
 
-    return callback, values, weights
+    return callback, values, grad_norm
 
 def __q1(hidden_size=16):
     # ---------------------------------------------------------------------------------------------#
     # Question 1: Fitting simple network with two hidden layers                                    #
     # ---------------------------------------------------------------------------------------------#
-    callback, values, weights = get_callback()
+    callback, values, grad_norm = get_callback()
     relu1 = ReLU()
     relu2 = ReLU()
     loss = CrossEntropyLoss()
     lr = FixedLR(0.1)
     layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=hidden_size, activation=relu1, include_intercept=True)
     hidden_one = FullyConnectedLayer(input_dim=hidden_size, output_dim=hidden_size, activation=relu2, include_intercept=True)
-    layer_two = FullyConnectedLayer(input_dim=hidden_size, output_dim=3, include_intercept=False)
+    layer_two = FullyConnectedLayer(input_dim=hidden_size, output_dim=3, include_intercept=True)
     gradient = GradientDescent(learning_rate=lr, max_iter=5000, callback=callback)
     nn = NeuralNetwork(modules=[layer_one, hidden_one, layer_two], loss_fn=loss, solver=gradient)
     nn.fit(train_X, train_y)
-    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
+    fig = plot_decision_boundary(nn, lims, test_X, test_y, title="Test")
+    print(nn.loss(test_X, test_y))
     import plotly.offline
 
     plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\ex1_{hidden_size}.html")
@@ -127,13 +128,21 @@ def __q1(hidden_size=16):
     plt.scatter(list(range(len(values))), values)
     plt.show()
     plt.clf()
+
+    plt.title(f"Gradient Norm as function of iteration_{hidden_size}")
+    plt.xlabel("iteration")
+    plt.ylabel("grad norm")
+    plt.scatter(list(range(len(values))), grad_norm)
+    plt.show()
+    plt.clf()
     # ---------------------------------------------------------------------------------------------#
     # Question 2: Fitting a network with no hidden layers                                          #
     # ---------------------------------------------------------------------------------------------#
     layer_one = FullyConnectedLayer(input_dim=len(train_X[0]), output_dim=3, activation=relu1, include_intercept=True)
     nn = NeuralNetwork(modules=[layer_one], loss_fn=loss, solver=gradient)
     nn.fit(train_X, train_y)
-    fig = plot_decision_boundary(nn, lims, train_X, train_y, title="Test")
+    fig = plot_decision_boundary(nn, lims, test_X, test_y, title="Test")
+    print(nn.loss(test_X, test_y))
     import plotly.offline
 
     plotly.offline.plot(fig, filename=fr"C:\HUJI_computer_projects\IML\ex7\data\ex2_{hidden_size}.html")

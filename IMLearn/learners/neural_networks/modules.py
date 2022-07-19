@@ -68,7 +68,7 @@ class FullyConnectedLayer(BaseModule):
             X = np.c_[np.ones(X.shape[0]), X]
         wX = X @ self.weights
         if "pre" in kwargs.keys():
-            kwargs["pre"][0] = wX
+            kwargs["pre"].append(wX)
         if self.activation_:
             return self.activation_.compute_output(wX)
         return wX

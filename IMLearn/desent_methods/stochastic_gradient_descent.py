@@ -114,22 +114,19 @@ class StochasticGradientDescent:
         best_weight_score = f.compute_output(X=X, y=y)
         sum_weights = np.zeros(f.weights.shape)
         n = 0
-        for t in range(self.max_iter_):
+        from tqdm import tqdm
+        for t in tqdm(range(self.max_iter_)):
             n += 1
             prev_weight = f.weights
             val, jac, eta = self._partial_fit(f, X, y, t)
 
             sum_weights += f.weights
-            current_output = f.compute_output(X=X, y=y)
-            if current_output < best_weight_score:
-                best_weight_score = current_output
-
             delta = np.linalg.norm(f.weights - prev_weight, ord=2)
             if np.linalg.norm(f.weights - prev_weight, ord=2) < self.tol_:
                 break
-            self.callback_(solver=self, weights=f.weights, val=current_output,
+            self.callback_(solver=self, weights=f.weights, val=val,
                            grad=jac, t=t, eta=eta, delta=delta)
-        return f.weights
+        return f.weights / t
     def _partial_fit(self, f: BaseModule, X: np.ndarray, y: np.ndarray, t: int) -> Tuple[np.ndarray, np.ndarray, float]:
         """
         Perform a SGD iteration over given samples
@@ -161,9 +158,10 @@ class StochasticGradientDescent:
         """
         idx = np.random.choice(range(len(X)), self.batch_size_)
         X_temp = X[idx,:]
-        y_temp = y[idx,:]
+        y_temp = y[idx]
+        loss = f.compute_output(X_temp, y_temp)
         eta = self.learning_rate_.lr_step(t=t)
         grad = f.compute_jacobian(X=X_temp, y=y_temp)
         f.weights = f.weights - eta * grad / np.linalg.norm(grad)
-        return f.weights, grad, eta
+        return loss, grad, eta
 

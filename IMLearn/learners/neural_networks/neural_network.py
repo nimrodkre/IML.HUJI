@@ -115,11 +115,8 @@ class NeuralNetwork(BaseEstimator, BaseModule):
         self.post_activations.append(X)
         output = X
         for layer in self.modules_:
-            temp = list()
-            temp.append(0)
-            output = layer.compute_output(output, pre=temp)
+            output = layer.compute_output(output, pre=self.pre_activations)
             self.post_activations.append(output)
-            self.pre_activations.append(temp[0])
         return self.loss_func_.compute_output(self.post_activations[-1], y)
 
     def compute_prediction(self, X: np.ndarray):
